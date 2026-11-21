@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -19,6 +20,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.sukhoramen.cs.MainViewModel
 import com.sukhoramen.cs.UiEvent
+import android.content.Intent
+import android.net.Uri
 
 @Composable
 fun SukhoApp(model: MainViewModel, onExit: () -> Unit = {}) {
@@ -28,9 +31,16 @@ fun SukhoApp(model: MainViewModel, onExit: () -> Unit = {}) {
         val entry by nav.currentBackStackEntryAsState()
         val route = entry?.destination?.route ?: "dm"
         val snackbar = remember { SnackbarHostState() }
+        val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
         DisposableEffect(lifecycleOwner, model) {
-            val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_STOP) model.flushDrafts() }
+            val observer = LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_STOP -> model.flushDrafts()
+                    Lifecycle.Event.ON_RESUME -> if (!state.isDemo) model.refresh()
+                    else -> Unit
+                }
+            }
             lifecycleOwner.lifecycle.addObserver(observer)
             onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
         }
@@ -44,6 +54,13 @@ fun SukhoApp(model: MainViewModel, onExit: () -> Unit = {}) {
                             actionLabel = "Buka", duration = SnackbarDuration.Short,
                         )
                         if (result == SnackbarResult.ActionPerformed) nav.navigate("detail/${event.id}") { launchSingleTop = true }
+                    }
+                    is UiEvent.OpenUrl -> {
+                        try {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(event.url)))
+                        } catch (_: Exception) {
+                            snackbar.showSnackbar("Tidak ada browser yang tersedia.", duration = SnackbarDuration.Short)
+                        }
                     }
                 }
             }
@@ -142,4 +159,3 @@ private fun BottomNavigation(route: String, onSelect: (String) -> Unit) {
         }
     }
 }
-

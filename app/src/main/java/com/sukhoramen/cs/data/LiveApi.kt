@@ -28,6 +28,7 @@ class LiveSession {
 
 data class LiveAccount(val platform: Platform, val status: ConnectionStatus)
 data class InboxPage(val items: List<Interaction>, val nextCursor: String?)
+data class OAuthConnection(val authorizationUrl: String)
 
 class LiveApi(private val baseUrl: String, private val session: LiveSession) {
     fun newDeviceToken(): String = ByteArray(32).also(SecureRandom()::nextBytes)
@@ -44,6 +45,13 @@ class LiveApi(private val baseUrl: String, private val session: LiveSession) {
             val platform = parsePlatform(item.optString("platform")) ?: return@mapNotNull null
             platform to ConnectionStatus(item.optString("status"), item.optString("handle").takeIf(String::isNotBlank), item.optBoolean("canRead"), item.optBoolean("canReply"))
         }.toMap()
+    }
+
+    suspend fun connect(platform: Platform): OAuthConnection {
+        val root = request("GET", "/api/connect?platform=${encode(platform.apiValue)}")
+        val url = root.optString("authorizationUrl").takeIf { it.startsWith("https://") }
+            ?: throw ApiError("Tautan koneksi Instagram tidak valid.")
+        return OAuthConnection(url)
     }
 
     suspend fun inbox(cursor: String? = null): InboxPage {
@@ -125,3 +133,8 @@ class LiveApi(private val baseUrl: String, private val session: LiveSession) {
     private fun JSONObject.optNullable(key: String): String? = if (isNull(key)) null else optString(key).takeIf { it.isNotBlank() }
 }
 
+private val Platform.apiValue: String
+    get() = when (this) {
+        Platform.INSTAGRAM -> "instagram"
+        Platform.TIKTOK -> "tiktok"
+    }

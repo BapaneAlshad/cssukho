@@ -28,7 +28,10 @@ class MainActivity : ComponentActivity() {
                 }
                 EntryPage.DEMO, EntryPage.LIVE -> {
                     val repository = if (entry.page == EntryPage.DEMO) app.demoRepository else app.liveRepository
-                    val model: MainViewModel = viewModel(key = "inbox_${entry.page.name}", factory = MainViewModel.Factory(repository))
+                    val model: MainViewModel = viewModel(
+                        key = "inbox_${entry.page.name}",
+                        factory = MainViewModel.Factory(repository, if (entry.page == EntryPage.LIVE) app.liveApi else null),
+                    )
                     SukhoApp(model, onExit = entryModel::showGate)
                 }
             }
@@ -38,4 +41,3 @@ class MainActivity : ComponentActivity() {
     override fun onStart() { super.onStart(); entryModel.onForeground() }
     override fun onStop() { entryModel.onBackground(); super.onStop() }
 }
-

@@ -19,6 +19,9 @@ Vercel Functions TypeScript tanpa framework. Database menggunakan proyek Supabas
 | `GET /api/inbox?cursor=...` | Bearer token perangkat | Daftar interaksi, 50 per halaman |
 | `GET /api/interaction?id=...` | Bearer token perangkat | Detail dan pesan |
 | `PATCH /api/interaction?id=...` | Bearer token perangkat | `{ "completed": true/false }` |
+| `GET /api/connect?platform=instagram` | Bearer token perangkat | Buat URL OAuth Instagram sekali pakai |
+| `GET /api/instagram-callback` | Callback provider | Tukar kode OAuth dan simpan token terenkripsi |
+| `GET/POST /api/instagram-webhook` | Provider signature | Verifikasi dan simpan event webhook secara idempoten |
 
 Token dibuat acak pada perangkat, dikirim hanya saat aktivasi melalui HTTPS, lalu dipakai sebagai Bearer token. Database hanya menyimpan hash SHA-256 token. Aktivasi dengan kode dan token sama dapat diulang jika respons jaringan hilang. Kode yang kedaluwarsa atau sudah dipakai oleh token lain ditolak.
 
@@ -34,3 +37,14 @@ Setelah migrasi terpasang, **sebelum perangkat sungguhan dipasangkan**, set `TES
 
 Uji database penuh memerlukan proyek Supabase yang dapat dikelola. Pada tahap ini, inbox cloud kosong dan API balasan sosial belum tersedia; data demo hanya ada di Android.
 
+## Tahap 3 — koneksi Instagram resmi
+
+Tahap ini memakai Instagram API with Instagram Login. Akun yang dihubungkan harus akun Instagram Professional (Business atau Creator). Buat Meta App untuk pengujian, aktifkan produk Instagram/API yang sesuai, lalu daftarkan URL callback persis:
+
+```text
+https://sukho-ramen-api.vercel.app/api/instagram-callback
+```
+
+Set `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`, `INSTAGRAM_TOKEN_ENCRYPTION_KEY` (32 byte, base64url), dan `INSTAGRAM_WEBHOOK_VERIFY_TOKEN` langsung sebagai environment variables Vercel. Jangan menaruh nilai tersebut di chat, GitHub, atau APK. Setelah itu deploy ulang dan tekan **Hubungkan Instagram** dari Pengaturan pada aplikasi live.
+
+Callback hanya mengonsumsi state OAuth satu kali dan state kedaluwarsa setelah 10 menit. Token provider disimpan sebagai ciphertext AES-256-GCM di skema privat. Webhook memvalidasi `X-Hub-Signature-256` dan mengabaikan event duplikat; pemetaan event menjadi inbox dan pengiriman balasan dijadwalkan untuk increment berikutnya. TikTok tetap menunggu akses resmi.

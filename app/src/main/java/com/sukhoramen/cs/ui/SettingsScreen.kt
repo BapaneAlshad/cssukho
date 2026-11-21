@@ -187,18 +187,34 @@ private fun LiveSettingsScreen(state: InboxState, model: MainViewModel, onExit: 
         SoftCard(Modifier.fillMaxWidth()) {
             Platform.entries.forEachIndexed { index, platform ->
                 val connection = state.connections[platform]
-                Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    IconDisc(if (platform == Platform.INSTAGRAM) SukhoIcons.Instagram else SukhoIcons.TikTok)
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text(platform.label, style = MaterialTheme.typography.titleSmall)
-                        Text(when (connection?.status) {
-                            "connected" -> "Terhubung"
-                            "reauth_required" -> "Perlu login ulang"
-                            "pending_access" -> "Menunggu akses API"
-                            "unsupported" -> "Belum didukung"
-                            else -> "Belum terhubung"
-                        }, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        IconDisc(if (platform == Platform.INSTAGRAM) SukhoIcons.Instagram else SukhoIcons.TikTok)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(platform.label, style = MaterialTheme.typography.titleSmall)
+                            Text(when (connection?.status) {
+                                "connected" -> "Terhubung"
+                                "reauth_required" -> "Perlu login ulang"
+                                "pending_access" -> "Menunggu akses API"
+                                "unsupported" -> "Belum didukung"
+                                else -> "Belum terhubung"
+                            }, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                        }
+                        if (connection?.status == "connected") {
+                            Text("@${connection.handle ?: "akun Instagram"}", style = MaterialTheme.typography.labelSmall, color = colors.primary)
+                        }
+                    }
+                    if (platform == Platform.INSTAGRAM && connection?.status != "connected") {
+                        OutlinedButton(
+                            onClick = { model.connect(Platform.INSTAGRAM) },
+                            modifier = Modifier.fillMaxWidth().testTag("connect_instagram"),
+                            shape = RoundedCornerShape(14.dp),
+                        ) {
+                            Icon(SukhoIcons.Link, null, Modifier.size(17.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Hubungkan Instagram")
+                        }
                     }
                 }
                 if (index == 0) HorizontalDivider(Modifier.padding(horizontal = 18.dp), color = colors.outlineVariant)
@@ -230,4 +246,3 @@ private fun SectionHeading(title: String, subtitle: String) {
         Text(subtitle, Modifier.padding(top = 3.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
-

@@ -7,9 +7,5 @@ local.properties
 *.jks
 *.keystore
 captures/
-artifacts/*.apk
-artifacts/*.log
-artifacts/*.txt
-artifacts/screenshots/
 
 

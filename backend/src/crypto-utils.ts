@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 export const ACTIVATION_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -45,3 +45,32 @@ export function constantTimeEqual(a: string, b: string): boolean {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
+function encryptionKey(): Buffer {
+  const encoded = process.env.INSTAGRAM_TOKEN_ENCRYPTION_KEY;
+  if (!encoded) throw new Error('INSTAGRAM_TOKEN_ENCRYPTION_KEY is required');
+  const key = Buffer.from(encoded, 'base64url');
+  if (key.length !== 32) throw new Error('INSTAGRAM_TOKEN_ENCRYPTION_KEY must decode to 32 bytes');
+  return key;
+}
+
+/** Encrypt a provider token before it is persisted. The key never leaves Vercel. */
+export function encryptSecret(value: string): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', encryptionKey(), iv);
+  const ciphertext = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return [iv, ciphertext, tag].map(part => part.toString('base64url')).join('.');
+}
+
+export function decryptSecret(value: string): string {
+  const parts = value.split('.');
+  if (parts.length !== 3) throw new Error('Invalid encrypted secret');
+  const [iv, ciphertext, tag] = parts.map(part => Buffer.from(part, 'base64url'));
+  const decipher = createDecipheriv('aes-256-gcm', encryptionKey(), iv);
+  decipher.setAuthTag(tag);
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
+}
+
+export function webhookSignature(rawBody: string, secret: string): string {
+  return createHmac('sha256', secret).update(rawBody, 'utf8').digest('hex');
+}

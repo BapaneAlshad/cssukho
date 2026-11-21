@@ -14,9 +14,10 @@ import kotlinx.coroutines.delay
 sealed interface UiEvent {
     data class Notice(val text: String) : UiEvent
     data class Incoming(val id: String, val added: Boolean) : UiEvent
+    data class OpenUrl(val url: String) : UiEvent
 }
 
-class MainViewModel(private val repository: InboxRepository) : ViewModel() {
+class MainViewModel(private val repository: InboxRepository, private val liveApi: LiveApi? = null) : ViewModel() {
     val state = repository.state
     private val eventFlow = MutableSharedFlow<UiEvent>()
     val events = eventFlow.asSharedFlow()
@@ -27,6 +28,16 @@ class MainViewModel(private val repository: InboxRepository) : ViewModel() {
     init { viewModelScope.launch { repository.initialize() } }
 
     fun refresh() { viewModelScope.launch { repository.refresh() } }
+    fun connect(platform: Platform) {
+        val api = liveApi ?: return
+        viewModelScope.launch {
+            try {
+                eventFlow.emit(UiEvent.OpenUrl(api.connect(platform).authorizationUrl))
+            } catch (error: Exception) {
+                eventFlow.emit(UiEvent.Notice(error.message ?: "Koneksi akun gagal. Coba lagi."))
+            }
+        }
+    }
     fun open(id: String) { viewModelScope.launch { repository.loadDetail(id) } }
     fun draft(id: String, text: String) {
         pendingDrafts[id] = text
@@ -106,9 +117,8 @@ class MainViewModel(private val repository: InboxRepository) : ViewModel() {
         }
     }
 
-    class Factory(private val repository: InboxRepository) : ViewModelProvider.Factory {
+    class Factory(private val repository: InboxRepository, private val liveApi: LiveApi? = null) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository, liveApi) as T
     }
 }
-
