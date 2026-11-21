@@ -72,7 +72,7 @@ data class InboxState(
     val connections: Map<Platform, ConnectionStatus> = emptyMap(),
 ) {
     fun replyBlocked(interaction: Interaction): String? = when {
-        !isDemo -> "Balasan akun sosial belum tersedia. Hubungkan API resmi pada tahap integrasi."
+        !isDemo -> "Balasan live belum diaktifkan pada tahap ini. Sinkronisasi dan izin kirim masih dalam persiapan."
         scenario == DemoScenario.OFFLINE -> "Sedang offline (simulasi). Hubungkan kembali sebelum membalas."
         interaction.replyRestriction != null -> interaction.replyRestriction
         interaction.platform == affectedPlatform && scenario == DemoScenario.EXPIRED ->
