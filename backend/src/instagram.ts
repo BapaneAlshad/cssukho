@@ -25,7 +25,11 @@ export function instagramConfig(): InstagramConfig | null {
   const appSecret = process.env.INSTAGRAM_APP_SECRET?.trim();
   const redirectUri = process.env.INSTAGRAM_REDIRECT_URI?.trim();
   const webhookVerifyToken = process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN?.trim();
-  if (!appId || !appSecret || !redirectUri || !webhookVerifyToken) return null;
+  const encryptionKey = process.env.INSTAGRAM_TOKEN_ENCRYPTION_KEY?.trim();
+  if (!appId || !appSecret || !redirectUri || !webhookVerifyToken || !encryptionKey) return null;
+  try {
+    if (Buffer.from(encryptionKey, 'base64url').length !== 32) return null;
+  } catch { return null; }
   return {
     appId,
     appSecret,

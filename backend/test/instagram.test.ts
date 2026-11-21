@@ -19,7 +19,7 @@ test('provider token encryption round-trips with a fresh authenticated ciphertex
 });
 
 test('instagram configuration stays disabled until all required secrets exist', () => {
-  const keys = ['INSTAGRAM_APP_ID', 'INSTAGRAM_APP_SECRET', 'INSTAGRAM_REDIRECT_URI', 'INSTAGRAM_WEBHOOK_VERIFY_TOKEN'] as const;
+  const keys = ['INSTAGRAM_APP_ID', 'INSTAGRAM_APP_SECRET', 'INSTAGRAM_REDIRECT_URI', 'INSTAGRAM_WEBHOOK_VERIFY_TOKEN', 'INSTAGRAM_TOKEN_ENCRYPTION_KEY'] as const;
   const previous = Object.fromEntries(keys.map(key => [key, process.env[key]]));
   keys.forEach(key => delete process.env[key]);
   try {
@@ -38,10 +38,12 @@ test('instagram graph endpoint uses the configured version and webhook signature
     appSecret: process.env.INSTAGRAM_APP_SECRET,
     redirectUri: process.env.INSTAGRAM_REDIRECT_URI,
     verify: process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN,
+    encryption: process.env.INSTAGRAM_TOKEN_ENCRYPTION_KEY,
   };
   Object.assign(process.env, {
     INSTAGRAM_APP_ID: 'app', INSTAGRAM_APP_SECRET: 'secret',
     INSTAGRAM_REDIRECT_URI: 'https://example.test/callback', INSTAGRAM_WEBHOOK_VERIFY_TOKEN: 'verify',
+    INSTAGRAM_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32, 9).toString('base64url'),
   });
   try {
     const config = instagramConfig()!;
@@ -52,6 +54,7 @@ test('instagram graph endpoint uses the configured version and webhook signature
     for (const [key, value] of Object.entries({
       INSTAGRAM_APP_ID: previous.appId, INSTAGRAM_APP_SECRET: previous.appSecret,
       INSTAGRAM_REDIRECT_URI: previous.redirectUri, INSTAGRAM_WEBHOOK_VERIFY_TOKEN: previous.verify,
+      INSTAGRAM_TOKEN_ENCRYPTION_KEY: previous.encryption,
     })) {
       if (value === undefined) delete process.env[key]; else process.env[key] = value;
     }

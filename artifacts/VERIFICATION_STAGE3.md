@@ -32,7 +32,7 @@ APK smoke: `scripts/smoke-device.ps1 -Serial emulator-5556` PASS (native input, 
 
 ## Pemeriksaan cloud
 
-- Deployment produksi Vercel: `dpl_7wPDd9vw2rcwndkhg6qUxoAiJ9zz`, region `sin1`, status `READY`.
+- Deployment produksi Vercel: `dpl_8htmQL6dodJFEfneAaF4DagSzLq7`, region `sin1`, status `READY`.
 - Tanpa Bearer token, `/api/bootstrap` dan `/api/connect` mengembalikan `401`.
 - Sebelum kredensial Meta diisi, callback dan webhook mengembalikan `503 provider_not_configured`; tidak ada token yang bocor.
 - Kredensial berikut belum diisi karena belum ada Meta App: `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`, `INSTAGRAM_TOKEN_ENCRYPTION_KEY`, `INSTAGRAM_WEBHOOK_VERIFY_TOKEN`.
@@ -50,4 +50,3 @@ APK smoke: `scripts/smoke-device.ps1 -Serial emulator-5556` PASS (native input, 
 2. Daftarkan callback `https://sukho-ramen-api.vercel.app/api/instagram-callback`.
 3. Isi environment variables Vercel melalui dashboard/konektor, tanpa menaruh secret di chat atau GitHub.
 4. Deploy ulang, lalu uji **Hubungkan Instagram** dari APK live dan verifikasi webhook sebelum menyatakan integrasi end-to-end aktif.
-
