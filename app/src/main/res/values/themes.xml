@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.Sukho" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">#F1F6FF</item>
+        <item name="android:colorAccent">#1769D2</item>
+    </style>
+    <color name="launcher_background">#207BE1</color>
+</resources>
+
